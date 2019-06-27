@@ -10,6 +10,7 @@ import { FilePreviewComponent } from './display-controls/file-preview.component'
 import { RemoteAnswerComponent } from './display-controls/remote-answer.component';
 import { HttpModule } from '@angular/http';
 import { SharedModule } from '../shared.module';
+import { PdfViewerModule } from 'ng2-pdf-viewer';
 @NgModule({
     declarations: [
         EncounterViewerComponent,
@@ -22,6 +23,7 @@ import { SharedModule } from '../shared.module';
         FormsModule,
         ReactiveFormsModule,
         CommonModule,
+        PdfViewerModule,
         HttpModule,
         SharedModule
     ],

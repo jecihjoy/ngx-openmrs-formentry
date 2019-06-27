@@ -1,9 +1,11 @@
-import { Component, OnInit, Input, forwardRef, Renderer2 } from '@angular/core';
+import { Component, OnInit, Input, forwardRef, Renderer2 , ChangeDetectorRef} from '@angular/core';
 import {
     ControlValueAccessor,
     NG_VALUE_ACCESSOR
 } from '@angular/forms';
+import { DomSanitizer} from '@angular/platform-browser';
 import { DataSource } from '../../form-entry/question-models/interfaces/data-source';
+import {SecurePipe} from './secure.pipe';
 @Component({
     selector: 'remote-file-upload',
     templateUrl: 'file-upload.component.html',
@@ -21,6 +23,8 @@ import { DataSource } from '../../form-entry/question-models/interfaces/data-sou
 export class RemoteFileUploadComponent implements OnInit, ControlValueAccessor {
     uploading = false;
     innerValue = null;
+    resultsIsPdf = false;
+    pdfUrl: any;
     private _dataSource: DataSource;
     @Input()
     public get dataSource(): DataSource {
@@ -34,14 +38,29 @@ export class RemoteFileUploadComponent implements OnInit, ControlValueAccessor {
     constructor(private renderer: Renderer2) { }
 
     ngOnInit() {
+        if (this.innerValue) {
+            const re = /pdf/gi;
+                if (this.innerValue.search(re) !== -1) {
+                    this.getPdfUrl(this.innerValue);
+                }
+        }
 
     }
+    public onFileChange(fileList) {
+        console.log(fileList.length);
+          for (const file of fileList) {
+            this.upload(file);
+          }
+      }
     upload(data) {
         if (this.dataSource) {
             this.uploading = true;
             this.dataSource.fileUpload(data).subscribe((result) => {
-                // console.log('Result', result);
                 this.innerValue = result.image;
+                const re = /pdf/gi;
+                if (this.innerValue.search(re) !== -1) {
+                    this.getPdfUrl(this.innerValue);
+                }
                 this.propagateChange(this.innerValue);
                 this.uploading = false;
             }, (error) => {
@@ -54,6 +73,10 @@ export class RemoteFileUploadComponent implements OnInit, ControlValueAccessor {
     public writeValue(value: any) {
         if (value !== this.innerValue) {
             this.innerValue = value;
+            const re = /pdf/gi;
+            if (this.innerValue.search(re) !== -1) {
+                this.getPdfUrl(this.innerValue);
+            }
         }
     }
     // registers 'fn' that will be fired when changes are made
@@ -80,6 +103,15 @@ export class RemoteFileUploadComponent implements OnInit, ControlValueAccessor {
 
     public clearValue() {
         this.innerValue = null;
+        this.resultsIsPdf = false;
+        this.pdfUrl = null;
         this.propagateChange(this.innerValue);
     }
+
+    public getPdfUrl(innerValue: string) {
+        this.dataSource.fetchFile(innerValue, 'pdf' ).subscribe((file) => {
+          this.resultsIsPdf = true;
+          this.pdfUrl = file;
+         });
+      }
 }

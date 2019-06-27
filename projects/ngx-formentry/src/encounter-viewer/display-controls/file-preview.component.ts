@@ -11,9 +11,12 @@ const noop = () => {};
     selector: 'file-preview',
     styles: [``],
     template: `<div *ngIf="innerValue">
-              <img class="img-responsive"
+              <img *ngIf="!resultsIsPdf" class="img-responsive"
                 [src]="innerValue | secure:this._dataSource.fetchFile" alt="image" />
-                </div>`,
+                </div>
+                <a *ngIf="resultsIsPdf" (click)="getUrl()" style="cursor: pointer"><u>Open PDF</u></a>
+                `,
+
     providers: [
       {
         provide: NG_VALUE_ACCESSOR,
@@ -22,9 +25,11 @@ const noop = () => {};
       }
     ]
   })
-export class FilePreviewComponent implements ControlValueAccessor {
+export class FilePreviewComponent implements ControlValueAccessor, OnInit {
     @Input() public source: any;
     public innerValue = null;
+    public pdfUrl: any;
+    public resultsIsPdf = false;
     public _dataSource: DataSource;
     @Input()
     public get dataSource(): DataSource {
@@ -38,6 +43,7 @@ export class FilePreviewComponent implements ControlValueAccessor {
     private onTouchedCallback: () => void = noop;
     private onChangeCallback: (_: any) => void = noop;
     constructor(private encounterService: EncounterViewerService) {}
+    ngOnInit() {  }
     // get accessor
     get value(): any {
       return this.innerValue;
@@ -54,6 +60,10 @@ export class FilePreviewComponent implements ControlValueAccessor {
     public writeValue(v: any) {
       if (v !== this.innerValue) {
           this.innerValue = v;
+          const re = /pdf/gi;
+          if (this.innerValue.search(re) !== -1) {
+            this.resultsIsPdf = true;
+          }
       }
     }
 
@@ -88,4 +98,9 @@ export class FilePreviewComponent implements ControlValueAccessor {
 
       // fileReader.readAsDataURL(fileToLoad);
     }
+  public getUrl() {
+      this.dataSource.fetchFile(this.innerValue, 'pdf').subscribe((file) => {
+        window.open(file, '_blank');
+      });
   }
+}
